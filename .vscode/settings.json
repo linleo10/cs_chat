@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "*.aspx": "csharp",
+        "cjson.h": "c",
+        "in.h": "c",
+        "db.h": "c",
+        "sqlite3.h": "c"
+    },
+    "cmake.sourceDirectory": "/Users/leo/Documents/cs_chat/Server"
+}
