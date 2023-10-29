@@ -30,7 +30,7 @@ struct CommandMap commandTable[] = {
 };
 
 enum Command getCommandId(const char *command) {
-    printf("Command: %s", command);
+    printf("Command: %s\n", command);
     for (int i = 0; i < sizeof(commandTable) / sizeof(commandTable[0]); ++i) {
         if (strcmp(command, commandTable[i].commandStr) == 0) {
             return commandTable[i].commandId;
@@ -39,9 +39,35 @@ enum Command getCommandId(const char *command) {
     return UNKNOWN;
 }
 
-void handle_commands(const char *command_recvd, char returned_str[]) {
-    char command[64];
-    strncpy(command, command_recvd, sizeof(command_recvd) - 1);
+void handle_commands(const char *data_recvd, char returned_str[]) {
+    char buffer[4096] = { 0 }, command[64] = { 0 };
+    printf("data_recvd: %s", data_recvd);
+
+    cJSON *json_obj = cJSON_Parse(data_recvd);
+    if (json_obj == NULL) {
+        const char *error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr != NULL) {
+            printf("Error: %s\n", error_ptr);
+        }
+        cJSON_Delete(json_obj);
+        strncpy(returned_str, "UNKNOWN RESPONSE", sizeof("UNKNOWN RESPONSE") - 1);
+        return ;
+    }
+
+    cJSON *command_recvd = cJSON_GetObjectItemCaseSensitive(json_obj, "command");
+    if (cJSON_IsString(command_recvd) && (command_recvd->valuestring != NULL)) {
+        printf("command_recvd: %s\n", command_recvd->valuestring);
+        strncpy(command, command_recvd->valuestring, strlen(command_recvd->valuestring));
+        command[strlen(command_recvd->valuestring)] = '\0';
+    } else {
+        printf("Failed To Parse Command\n");
+        strncpy(returned_str, "UNKNOWN RESPONSE", sizeof("UNKNOWN RESPONSE") - 1);
+        return ;
+    }
+
+    cJSON_Delete(json_obj);
+
+    // strncpy(command, command_recvd, sizeof(command_recvd) - 1);
     trimString(command);
     enum Command commandId = getCommandId(command);
 
@@ -50,8 +76,11 @@ void handle_commands(const char *command_recvd, char returned_str[]) {
     case LIST:
         strncpy(returned_str, "LIST RESPONSE", sizeof("LIST RESPONSE") - 1);
         break;
+    case SEND_MSG:
+        strncpy(returned_str, "SEND_MSG RESPONSE", sizeof("SEND_MSG RESPONSE") - 1);
+        break;
     case UNKNOWN:
-        strncpy(returned_str, "UNKNOWN RESPONSE", sizeof("LIST RESPONSE") - 1);
+        strncpy(returned_str, "UNKNOWN RESPONSE", sizeof("UNKNOWN RESPONSE") - 1);
         break;
     default:
         break;
@@ -70,11 +99,9 @@ void* handle_client(void *client_socket_ptr) {
         if (recv_bytes <= 0) {
             break; // Client disconnect, quit the while loop
         }
-        buffer[recv_bytes] = '\0';
-        printf("Received from client: %s\n", buffer);
+        // buffer[recv_bytes] = '\0';
 
         handle_commands(buffer, reply_message);
-        printf("response: %s", reply_message);
 
         // const char* reply_message = "Server received your message!";
         send(client_sockfd, reply_message, strlen(reply_message), 0);

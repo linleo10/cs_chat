@@ -4,7 +4,9 @@
         "cjson.h": "c",
         "in.h": "c",
         "db.h": "c",
-        "sqlite3.h": "c"
+        "sqlite3.h": "c",
+        "utils.h": "c",
+        "string.h": "c"
     },
     "cmake.sourceDirectory": "/Users/leo/Documents/cs_chat/Server"
 }
