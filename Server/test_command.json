@@ -1,0 +1,7 @@
+{
+    "command": "SEND_MSG",
+    "uid": 45,
+    "data": {
+        "message": "Test"
+    }
+}

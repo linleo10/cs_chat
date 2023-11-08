@@ -11,6 +11,9 @@
 
 #include "Common/utils.h"
 #include "Common/db.h"
+#include "Common/persistence.h"
+
+#include "Service/msg_service.h"
 
 enum Command {
     LIST,
@@ -77,7 +80,8 @@ void handle_commands(const char *data_recvd, char returned_str[]) {
         strncpy(returned_str, "LIST RESPONSE", sizeof("LIST RESPONSE") - 1);
         break;
     case SEND_MSG:
-        strncpy(returned_str, "SEND_MSG RESPONSE", sizeof("SEND_MSG RESPONSE") - 1);
+        // strncpy(returned_str, "SEND_MSG RESPONSE", sizeof("SEND_MSG RESPONSE") - 1);
+        send_message(data_recvd);
         break;
     case UNKNOWN:
         strncpy(returned_str, "UNKNOWN RESPONSE", sizeof("UNKNOWN RESPONSE") - 1);
@@ -100,6 +104,27 @@ void* handle_client(void *client_socket_ptr) {
             break; // Client disconnect, quit the while loop
         }
         // buffer[recv_bytes] = '\0';
+
+        cJSON *json_obj = cJSON_Parse(buffer);
+        if (json_obj == NULL) {
+            const char *error_ptr = cJSON_GetErrorPtr();
+            if (error_ptr != NULL) {
+                printf("Error: %s\n", error_ptr);
+            }
+            cJSON_Delete(json_obj);
+            continue;
+        }
+        cJSON *uid = cJSON_GetObjectItemCaseSensitive(json_obj, "uid");
+        if (cJSON_IsNumber(uid)) {
+            struct Client *new_client = (struct Client *)malloc(sizeof(struct Client));
+            new_client->sockfd = client_sockfd;
+            new_client->uid = uid->valueint;
+            new_client->next = NULL;
+
+            int index = hash_function(uid->valueint);
+            new_client->next = clients[index];
+            clients[index] = new_client;
+        }
 
         handle_commands(buffer, reply_message);
 

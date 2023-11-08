@@ -6,7 +6,9 @@
         "db.h": "c",
         "sqlite3.h": "c",
         "utils.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "msg_service.h": "c",
+        "persistence.h": "c"
     },
     "cmake.sourceDirectory": "/Users/leo/Documents/cs_chat/Server"
 }
